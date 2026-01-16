@@ -1,0 +1,51 @@
+## CHANGE 更改此处为你的附属名称
+name: AdvanceTexture
+
+## CHANGE 更改此处为你的名称
+author: matl114
+
+## CHANGE 这是对你插件的介绍
+description: A packet translator plugin to provide stable custom model data service without changing item, this plugin is mainly based on packetevents
+
+## CHANGE 指向你的 JavaPlugin 主类
+main: me.matl114.advanceTexture.AdvanceTexture
+
+## 你可以更改为你的项目仓库地址，或者你的个人网站。你也可以移除此项目。
+website: https://github.com/m1919810/AdvanceTexture
+
+## 该值将在构建时被自动替换为pom.xml中定义的版本。
+## 不要更改此项目。
+version: ${project.version}
+
+## 这是运行该附属所需的最低MC版本。
+api-version: '1.20'
+
+## 指定 Slimefun 作为依赖项，必须
+
+softdepend:
+  - GuizhanLibPlugin
+  - ProtocolLib
+  - ProtocolSupport
+  - ViaVersion
+  - ViaBackwards
+  - ViaRewind
+  - Geyser-Spigot
+
+commands:
+  advancetexture:
+    description: basic logitech command
+    aliases: ast
+    usage: 'ask the author,pls.I dont think theres a need for you to use these commands'
+
+permissions:
+  advancetexture.command.main:
+    description: Allows you to use advancetexture commands
+  advancetexture.command.op:
+    description: Allows you to use operator commands
+    default: op
+  advancetexture.command.pack:
+    description: Allows you to use advancetexture pack commands
+    default: op
+  advancetexture.command.pack.other:
+    description: Allows you to use advancetexture pack commands for others
+    default: op

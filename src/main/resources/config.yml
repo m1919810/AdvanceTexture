@@ -1,0 +1,49 @@
+
+# 自动更新 使用guizhan auto update service
+autoUpdate : true
+# 材质CMD服务
+textureService:
+  # 是否启用texture修改
+  enableTexture: true
+  customIdPaths:
+    # NBT path,
+    slimefun: "PublicBukkitValues.slimefun:slimefun_item"
+    # Example
+    # pylon: "PublicBukkitValues.pyloncore:pylon_item_key"
+  itemModelPaths:
+    slimefun: "item-models.yml"
+    # Example
+    # pylon: "pylon-item-models.yml"
+# 资源包服务
+resourceService:
+  # 是否尝试提供指定的材质包下载请求
+  enableServerResourcePack: false
+  # 该请求是否是强制的
+  forceEnablePack: false
+  # 该请求的url
+  # 所有请求的url都会逐个发送给玩家
+  resourcePackUrl:
+    #可以放置多个键值对 其中键名会作为校验的生成信息
+    # 注意: 1.20.4以下只有第一个能生效
+    default_pack :
+      url : "http://127.0.0.1:8080/generated.zip"
+      # 用于校验和 相对于当前配置文件夹目录的 可以不填 比如填 “”
+      localFile : "generated.zip"
+      # 是否在上述的ServerResourcePack中自动发送
+      autoEnable : true
+    official_pack_1211 :
+      url : "https://cdn.modrinth.com/data/TznkVJky/versions/nwij66MR/Slimefun-ResourcePack.zip"
+      localFile : ""
+      autoEnable : false
+  # 是否随服务器一起启动下载服务
+  service:
+    # 是否启动
+    enable: false
+    port: 8080
+    # resource文件的路径
+    # 需要放置在当前插件配置文件夹/<path> 下方
+    resourcePackPath:
+      - "generated.zip"
+    # 检查请求的headers是否有mc客户端标识,若没有则不提供下载服务
+    headerCheck: true
+
