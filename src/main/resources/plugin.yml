@@ -5,7 +5,7 @@ name: AdvanceTexture
 author: matl114
 
 ## CHANGE 这是对你插件的介绍
-description: A packet translator plugin to provide stable custom model data service without changing item, this plugin is mainly based on packetevents
+description: A plugin to provide stable texture service via network packets, this plugin is mainly based on packetevents
 
 ## CHANGE 指向你的 JavaPlugin 主类
 main: me.matl114.advanceTexture.AdvanceTexture

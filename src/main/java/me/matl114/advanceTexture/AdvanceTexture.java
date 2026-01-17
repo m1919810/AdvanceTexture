@@ -36,7 +36,7 @@ public class AdvanceTexture extends JavaPlugin {
     public void onEnable(){
         super.onEnable();
         instance = this;
-        matlib = new UtilInitialization(this, "AdvanceSlimefunTexture")
+        matlib = new UtilInitialization(this, "AdvanceTexture")
             .onEnable();
         loadPacketApi();
         loadConfig();
@@ -108,7 +108,7 @@ public class AdvanceTexture extends JavaPlugin {
     private static record RepoInfo(String userName, String repoUrl, String branch){
 
     }
-    private static RepoInfo repo = new RepoInfo("m1919810", "AdvanceSlimefunTexture", "master");
+    private static RepoInfo repo = new RepoInfo("m1919810", "AdvanceTexture", "master");
 
     private void autoUpdate(){
         if(pluginConfig.isAutoUpdate()){

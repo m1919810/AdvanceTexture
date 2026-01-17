@@ -6,6 +6,7 @@ import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import com.github.retrooper.packetevents.protocol.component.ComponentTypes;
 import com.github.retrooper.packetevents.protocol.component.builtin.item.ItemCustomModelData;
+import com.github.retrooper.packetevents.protocol.component.builtin.item.ItemModel;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
 import com.github.retrooper.packetevents.protocol.item.ItemStack;
@@ -15,6 +16,7 @@ import com.github.retrooper.packetevents.protocol.nbt.NBTInt;
 import com.github.retrooper.packetevents.protocol.nbt.NBTString;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.protocol.recipe.data.MerchantOffer;
+import com.github.retrooper.packetevents.resources.ResourceLocation;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientClickWindow;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientCreativeInventoryAction;
 import com.github.retrooper.packetevents.wrapper.play.server.*;
@@ -34,8 +36,11 @@ public class TextureTranslationService extends PacketListenerAbstract implements
     private boolean registered = false;
     private Map<String, String> namespacedMpa;
     private Map<String, Function<NBTCompound, String>> optionalIdExtractor = new LinkedHashMap<>();
-    private String customSavedKey;
+    private String customCmdSavedKey;
+    private String customImSaveKey;
     private boolean enableService = false;
+    private boolean enableCmd = false;
+    private boolean enableItemModel = false;
     public TextureTranslationService() {
         manager = this;
     }
@@ -50,8 +55,9 @@ public class TextureTranslationService extends PacketListenerAbstract implements
         this.plugin = (AdvanceTexture) pl;
         this.namespacedMpa = new LinkedHashMap<>(this.plugin.getPluginConfig().getTextureService().getCustomIdPaths());
         buildExtractors();
-        enableService = this.plugin.getPluginConfig().getTextureService().isEnableTexture();
-        customSavedKey = new NamespacedKey(pl, "save_key").asString();
+        enableCmd =  this.plugin.getPluginConfig().getTextureService().isEnableTexture();
+        enableService = enableCmd || enableItemModel;
+        customCmdSavedKey = new NamespacedKey(pl, "save_key_cmd").asString();
         addToRegistry();
         registerFunctional();
         return (T) this;
@@ -294,54 +300,88 @@ public class TextureTranslationService extends PacketListenerAbstract implements
 
     private ItemStack tryMockId(ItemStack stack, ServerVersion version){
         if(stack == null)return null;
+        ItemStack stackCopy = null;
         if(!version.isNewerThanOrEquals(ServerVersion.V_1_20_5) ){
             //version less than 1.20.5
-            if(stack.getNBT() != null){
-                //nbt version
-                NBTCompound nbt = stack.getNBT();
-                String sfid = getCustomId(nbt);
-                if(sfid != null){
-                    int cmd = TextureIdService.getManager().getTextureIdOr(sfid);
-                    if(cmd > 0){
-                        var stackCopy = stack.copy();
-                        nbt = stackCopy.getNBT();
-                        if(nbt != null){
-                            var tag = nbt.getTagOrNull(LEGACY_PATH_CMD);
-                            nbt.setTag(customSavedKey, tag == null ? new NBTCompound() : tag);
-                            nbt.setTag(LEGACY_PATH_CMD, new NBTInt(cmd));
-                        }
+            if(enableCmd){
+                if(stack.getNBT() != null){
+                    //nbt version
+                    NBTCompound nbt = stack.getNBT();
+                    String sfid = getCustomId(nbt);
+                    if(sfid != null){
+                        int cmd = TextureIdService.getManager().getTextureIdOr(sfid);
+                        if(cmd > 0){
+                            stackCopy = stack.copy();
+                            nbt = stackCopy.getNBT();
+                            if(nbt != null){
+                                var tag = nbt.getTagOrNull(LEGACY_PATH_CMD);
+                                nbt.setTag(customCmdSavedKey, tag == null ? new NBTCompound() : tag);
+                                nbt.setTag(LEGACY_PATH_CMD, new NBTInt(cmd));
+                            }
 
-                        return stackCopy;
+                        }
                     }
                 }
             }
-            return null;
+            return stackCopy;
         }else {
             var nbtUnsafe = stack.getComponents().getPatches().get(ComponentTypes.CUSTOM_DATA);
             if(nbtUnsafe != null && nbtUnsafe.isPresent() && nbtUnsafe.get() instanceof NBTCompound nbt){
                 String string = getCustomId(nbt);
                 if(string != null){
-                    int cmd = TextureIdService.getManager().getTextureIdOr(string);
-                    if(cmd > 0){
-                        var nbtCopy = nbt.copy();
-                        var stackCopy = stack.copy();
-                        var cmdCp = stackCopy.getComponents().getPatches().get(ComponentTypes.CUSTOM_MODEL_DATA_LISTS);
-                        if(cmdCp != null){
-                            if(cmdCp.isPresent() && cmdCp.get() instanceof ItemCustomModelData cmdCpp){
-                                nbtCopy.setTag(customSavedKey, new NBTInt(cmdCpp.getLegacyId()));
-                            }else{
-                                nbtCopy.setTag(customSavedKey, new NBTByte((byte) 0));
+                    NBTCompound nbtCopy = null;
+                    if(enableCmd){
+                        int cmd = TextureIdService.getManager().getTextureIdOr(string);
+                        if(cmd > 0){
+                            if(stackCopy == null){
+                                stackCopy = stack.copy();
                             }
-                        }else{
-                            nbtCopy.setTag(customSavedKey, new NBTByte((byte) 1));
+                            if(nbtCopy  == null){
+                                nbtCopy = nbt.copy();
+                            }
+                            var cmdCp = stackCopy.getComponents().getPatches().get(ComponentTypes.CUSTOM_MODEL_DATA_LISTS);
+                            if(cmdCp != null){
+                                if(cmdCp.isPresent() && cmdCp.get() instanceof ItemCustomModelData cmdCpp){
+                                    nbtCopy.setTag(customCmdSavedKey, new NBTInt(cmdCpp.getLegacyId()));
+                                }else{
+                                    nbtCopy.setTag(customCmdSavedKey, new NBTByte((byte) 0));
+                                }
+                            }else{
+                                nbtCopy.setTag(customCmdSavedKey, new NBTByte((byte) 1));
+                            }
+                            stackCopy.getComponents().getPatches().put(ComponentTypes.CUSTOM_DATA, Optional.of(nbtCopy));
+                            stackCopy.getComponents().getPatches().put(ComponentTypes.CUSTOM_MODEL_DATA_LISTS, Optional.of(new ItemCustomModelData(cmd)));
                         }
-                        stackCopy.getComponents().getPatches().put(ComponentTypes.CUSTOM_DATA, Optional.of(nbtCopy));
-                        stackCopy.getComponents().getPatches().put(ComponentTypes.CUSTOM_MODEL_DATA_LISTS, Optional.of(new ItemCustomModelData(cmd)));
-                        return stackCopy;
                     }
+                    if(enableItemModel){
+                        String model = TextureIdService.getManager().getTextureModel(string);
+                        if(model != null && !model.isEmpty()){
+                            if(stackCopy == null){
+                                stackCopy = stack.copy();
+                            }
+                            if(nbtCopy == null){
+                                nbtCopy = nbt.copy();
+                            }
+                            var cmdCp = stackCopy.getComponents().getPatches().get(ComponentTypes.ITEM_MODEL);
+                            if(cmdCp != null){
+                                if(cmdCp.isPresent() && cmdCp.get() instanceof ItemModel cmdCpp){
+                                    nbtCopy.setTag(customImSaveKey, new NBTString(cmdCpp.getModelLocation().toString()));
+                                }else{
+                                    nbtCopy.setTag(customImSaveKey, new NBTByte((byte) 0));
+                                }
+                            }else{
+                                nbtCopy.setTag(customImSaveKey, new NBTByte((byte) 1));
+                            }
+                            stackCopy.getComponents().getPatches().put(ComponentTypes.CUSTOM_DATA, Optional.of(nbtCopy));
+                            stackCopy.getComponents().getPatches().put(ComponentTypes.ITEM_MODEL, Optional.of(new ItemModel(new ResourceLocation(model))));
+                        }
+                    }
+
+
                 }
             }
-            return null;
+            return stackCopy;
+
         }
     }
     private ItemStack tryUnMockId(ItemStack stack, ServerVersion version){
@@ -351,55 +391,100 @@ public class TextureTranslationService extends PacketListenerAbstract implements
             if(stack.getNBT() != null){
                 //nbt version
                 NBTCompound nbt = stack.getNBT();
-                var saveKey = nbt.getTagOrNull(customSavedKey);
-                if(saveKey == null)return null;
-                if(saveKey instanceof NBTCompound map0){
-                    var stackCopy = stack.copy();
-                    var nbtCopy = stackCopy.getNBT();
-                    if(nbtCopy != null){
-                        nbtCopy.removeTag(LEGACY_PATH_CMD);
-                        nbtCopy.removeTag(customSavedKey);
+                ItemStack stackCopy = null;
+                NBTCompound nbtCopy = null;
+                var saveKey = nbt.getTagOrNull(customCmdSavedKey);
+                if(saveKey != null){
+                    if(saveKey instanceof NBTCompound map0){
+                        if(stackCopy == null){
+                            stackCopy = stack.copy();
+                            nbtCopy = stack.getNBT();
+                        }
+                        if(nbtCopy != null){
+                            nbtCopy.removeTag(LEGACY_PATH_CMD);
+                            nbtCopy.removeTag(customCmdSavedKey);
 
+                        }
+                        return stackCopy;
                     }
-                    return stackCopy;
-                }else if (saveKey instanceof NBTInt int0){
-                    var stackCopy = stack.copy();
-                    var nbtCopy = stackCopy.getNBT();
-                    if(nbtCopy != null){
-                        nbtCopy.setTag(LEGACY_PATH_CMD, int0);
-                        nbtCopy.removeTag(customSavedKey);
+                    if (saveKey instanceof NBTInt int0){
+                        if(stackCopy == null){
+                            stackCopy = stack.copy();
+                            nbtCopy = stack.getNBT();
+                        }
+                        if(nbtCopy != null){
+                            nbtCopy.setTag(LEGACY_PATH_CMD, int0);
+                            nbtCopy.removeTag(customCmdSavedKey);
+                        }
+                        return stackCopy;
                     }
-                    return stackCopy;
-                }else{
-                    return null;
                 }
+                return stackCopy;
+
             }
             return null;
         }else {
             var nbtUnsafe = stack.getComponents().getPatches().get(ComponentTypes.CUSTOM_DATA);
             if(nbtUnsafe != null && nbtUnsafe.isPresent() && nbtUnsafe.get() instanceof NBTCompound nbt){
-                var saved = nbt.getTagOrNull(customSavedKey);
-                if(saved == null)return null;
-                else if(saved instanceof NBTByte flagByte){
-                    var stackCopy = stack.copy();
-                    var nbtCopy = nbt.copy();
-                    nbtCopy.removeTag(customSavedKey);
-                    stackCopy.getComponents().getPatches().put(ComponentTypes.CUSTOM_DATA, Optional.of(nbtCopy));
-                    if(flagByte.getAsBool()){
-                        stackCopy.getComponents().getPatches().remove(ComponentTypes.CUSTOM_MODEL_DATA_LISTS);
-                    }else{
-                        stackCopy.getComponents().getPatches().put(ComponentTypes.CUSTOM_MODEL_DATA_LISTS, Optional.empty());
+                ItemStack stackCopy = null;
+                NBTCompound nbtCopy = null;
+                var saved = nbt.getTagOrNull(customCmdSavedKey);
+                if(saved != null){
+                    if(saved instanceof NBTByte flagByte){
+                        if(stackCopy == null){
+                            stackCopy = stack.copy();
+                            nbtCopy = nbt.copy();
+                        }
+                        if(nbtCopy != null){
+                            nbtCopy.removeTag(customCmdSavedKey);
+                        }
+
+                        stackCopy.getComponents().getPatches().put(ComponentTypes.CUSTOM_DATA, Optional.ofNullable(nbtCopy));
+                        if(flagByte.getAsBool()){
+                            stackCopy.getComponents().getPatches().remove(ComponentTypes.CUSTOM_MODEL_DATA_LISTS);
+                        }else{
+                            stackCopy.getComponents().getPatches().put(ComponentTypes.CUSTOM_MODEL_DATA_LISTS, Optional.empty());
+                        }
+                    }else if(saved instanceof NBTInt int0){
+                        if(stackCopy == null){
+                            stackCopy = stack.copy();
+                            nbtCopy = nbt.copy();
+                        }
+                        nbtCopy.removeTag(customCmdSavedKey);
+                        stackCopy.getComponents().getPatches().put(ComponentTypes.CUSTOM_DATA, Optional.ofNullable(nbtCopy));
+                        stackCopy.getComponents().getPatches().put(ComponentTypes.CUSTOM_MODEL_DATA_LISTS, Optional.of(new ItemCustomModelData(int0.getAsInt())));
                     }
-                    return stackCopy;
-                }else if(saved instanceof NBTInt int0){
-                    var stackCopy = stack.copy();
-                    var nbtCopy = nbt.copy();
-                    nbtCopy.removeTag(customSavedKey);
-                    stackCopy.getComponents().getPatches().put(ComponentTypes.CUSTOM_DATA, Optional.of(nbtCopy));
-                    stackCopy.getComponents().getPatches().put(ComponentTypes.CUSTOM_MODEL_DATA_LISTS, Optional.of(new ItemCustomModelData(int0.getAsInt())));
-                    return stackCopy;
                 }
-                return null;
+                saved = nbt.getTagOrNull(customImSaveKey);
+                if(saved != null){
+                    if(saved instanceof NBTByte flagByte){
+                        if(stackCopy == null){
+                            stackCopy = stack.copy();
+                            nbtCopy = nbt.copy();
+                        }
+                        if(nbtCopy != null){
+                            nbtCopy.removeTag(customImSaveKey);
+                        }
+
+                        stackCopy.getComponents().getPatches().put(ComponentTypes.CUSTOM_DATA, Optional.ofNullable(nbtCopy));
+                        if(flagByte.getAsBool()){
+                            stackCopy.getComponents().getPatches().remove(ComponentTypes.ITEM_MODEL);
+                        }else{
+                            stackCopy.getComponents().getPatches().put(ComponentTypes.ITEM_MODEL, Optional.empty());
+                        }
+                    }else if(saved instanceof NBTString int0){
+                        if(stackCopy == null){
+                            stackCopy = stack.copy();
+                            nbtCopy = nbt.copy();
+                        }
+                        if(nbtCopy != null){
+                            nbtCopy.removeTag(customImSaveKey);
+                        }
+                        stackCopy.getComponents().getPatches().put(ComponentTypes.CUSTOM_DATA, Optional.ofNullable(nbtCopy));
+                        stackCopy.getComponents().getPatches().put(ComponentTypes.ITEM_MODEL, Optional.of(new ItemModel(new ResourceLocation(int0.getValue()))));
+                    }
+                }
+                return stackCopy;
             }
             return null;
         }

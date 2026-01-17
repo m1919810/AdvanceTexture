@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>me.matl114</groupId>
-    <artifactId>AdvanceSlimefunTexture</artifactId>
+    <artifactId>AdvanceTexture</artifactId>
     <version>1.0</version>
 
     <properties>
@@ -128,7 +128,7 @@
         <dependency>
             <groupId>com.github.m1919810.matlib</groupId>
             <artifactId>matlib-all</artifactId>
-            <version>5cf418e</version>
+            <version>b409d6a</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

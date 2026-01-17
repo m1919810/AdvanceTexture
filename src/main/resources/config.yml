@@ -6,7 +6,7 @@ textureService:
   # 是否启用texture修改
   enableTexture: true
   customIdPaths:
-    # NBT path,
+    # NBT path, 目前只支持键访问 不支持下标访问
     slimefun: "PublicBukkitValues.slimefun:slimefun_item"
     # Example
     # pylon: "PublicBukkitValues.pyloncore:pylon_item_key"
@@ -14,6 +14,17 @@ textureService:
     slimefun: "item-models.yml"
     # Example
     # pylon: "pylon-item-models.yml"
+# ItemModel覆写服务 和ItemModel组件有关,仅版本正确才 有效
+# 暂未测试
+itemModelService:
+  enableModel: false
+  customModelPaths:
+  # NBT path,
+    slimefun: "PublicBukkitValues.slimefun:slimefun_item"
+  itemModelPaths: {
+
+  }
+
 # 资源包服务
 resourceService:
   # 是否尝试提供指定的材质包下载请求

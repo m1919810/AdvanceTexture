@@ -2,13 +2,17 @@ package me.matl114.advanceTexture;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.Getter;
 import me.matl114.matlib.algorithms.algorithm.FileUtils;
 import me.matl114.matlib.core.Manager;
+import me.matl114.matlib.utils.Debug;
 import org.bukkit.plugin.Plugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class TextureIdService implements Manager {
@@ -34,7 +38,13 @@ public class TextureIdService implements Manager {
     }
     private void tryLoad(){
         textureIds.clear();
-        Map<String, String> paths = plugin.getPluginConfig().getTextureService().getItemModelPaths();
+        Map<String, String> paths = new LinkedHashMap<>();
+        if(plugin.getPluginConfig().getTextureService().isEnableTexture()){
+            paths.putAll(plugin.getPluginConfig().getTextureService().getItemModelPaths());
+        }
+        if(plugin.getPluginConfig().getItemModelService().isEnableModel()){
+            paths.putAll(plugin.getPluginConfig().getItemModelService().getItemModelPaths());
+        }
         for(var entry : paths.entrySet()) {
             String path = entry.getValue();
             if(path != null){
@@ -45,19 +55,21 @@ public class TextureIdService implements Manager {
                     if(!file.exists()){
                         FileUtils.copyFile(AdvanceTexture.class, path, filePath);
                     }
-
-                }catch (IOException e){
-                    throw new RuntimeException(e);
-                }
-                Map<String, ?> map0 = FileUtils.readFileYaml(file);
-                if(map0 != null){
-                    for(Map.Entry<String, ?> entry0 : map0.entrySet()){
-                        if(entry0.getValue() instanceof Number number){
-                            //add namespacedkey
-                            textureIds.put(entry.getKey() + ":" + entry0.getKey(), (int) number);
+                    Map<String, ?> map0 = FileUtils.readFileYaml(file);
+                    if(map0 != null){
+                        for(Map.Entry<String, ?> entry0 : map0.entrySet()){
+                            if(entry0.getValue() instanceof Number number){
+                                //add namespacedkey
+                                textureIds.put(entry.getKey() + ":" + entry0.getKey(), (int) number);
+                            }else if(entry0.getValue() instanceof String str){
+                                textureModelPath.put(entry.getKey() + ":" + entry0.getKey(), str);
+                            }
                         }
                     }
+                }catch (IOException e){
+                    Debug.logger("Fail to load texture id file :" , path);
                 }
+
 
             }
         }
@@ -65,9 +77,14 @@ public class TextureIdService implements Manager {
     }
 
     private final Object2IntMap<String> textureIds = new Object2IntOpenHashMap<String>();
+    private final Object2ObjectMap<String,String> textureModelPath = new Object2ObjectOpenHashMap<>();
 
     public int getTextureId(String texture){
         return textureIds.getInt(texture);
+    }
+
+    public String getTextureModel(String texture){
+        return textureModelPath.get(texture);
     }
     public int getTextureIdOr(String texture){
         return textureIds.getOrDefault(texture, 0);
