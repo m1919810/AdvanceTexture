@@ -1,4 +1,4 @@
-
+configVersion: 1
 # 自动更新 使用guizhan auto update service
 autoUpdate : true
 # 材质CMD服务

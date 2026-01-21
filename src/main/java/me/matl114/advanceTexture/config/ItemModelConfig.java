@@ -10,7 +10,7 @@ public class ItemModelConfig {
     Map<String, String> itemModelPaths = Map.of(
         "slimefun", "item-models.yml"
     );
-    Map<String, String> ccustomModelPaths = Map.of(
+    Map<String, String> customModelPaths = Map.of(
         "slimefun", "PublicBukkitValues.slimefun:slimefun_item"
     );
 }

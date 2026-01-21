@@ -85,8 +85,8 @@ public class AdvanceTexture extends JavaPlugin {
 
     private void loadConfig(){
         File file;
+        String filePath = "plugins/" + this.getName().replace(" ", "_") + "/config.yml";
         try{
-            String filePath = "plugins/" + this.getName().replace(" ", "_") + "/config.yml";
             file = new File(filePath);
             FileUtils.ensureParentDir(file);
             if(!file.exists()){
@@ -96,12 +96,25 @@ public class AdvanceTexture extends JavaPlugin {
         }catch (IOException e){
             throw new RuntimeException(e);
         }
+        boolean needUpdate = false;
         try{
             pluginConfig = FileUtils.readFileYaml(file, PluginConfig.class);
+            if(pluginConfig.getConfigVersion() < PluginConfig.CONFIG_VERSION){
+                Debug.warn("Your config file is current outdated. Auto updating your config.");
+                needUpdate = true;
+            }
         }catch (Throwable e){
             //handle config format change
-            Debug.warn("An error occurred while loading plugin config, please check if the config.yml matches the latest format");
-            throw new RuntimeException(e);
+            Debug.warn("An error occurred while loading plugin config, Auto updating the config.yml to the latest format");
+            needUpdate = true;
+        }
+        if(needUpdate){
+            try{
+                FileUtils.copyFile(AdvanceTexture.class, "config.yml", filePath);
+                pluginConfig = FileUtils.readFileYaml(file, PluginConfig.class);
+            }catch (Throwable e){
+                throw new RuntimeException(e);
+            }
         }
     }
 
