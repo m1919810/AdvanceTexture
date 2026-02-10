@@ -56,8 +56,10 @@ public class TextureTranslationService extends PacketListenerAbstract implements
         this.namespacedMpa = new LinkedHashMap<>(this.plugin.getPluginConfig().getTextureService().getCustomIdPaths());
         buildExtractors();
         enableCmd =  this.plugin.getPluginConfig().getTextureService().isEnableTexture();
+        enableItemModel = this.plugin.getPluginConfig().getItemModelService().isEnableModel();
         enableService = enableCmd || enableItemModel;
         customCmdSavedKey = new NamespacedKey(pl, "save_key_cmd").asString();
+        customImSaveKey = new NamespacedKey(pl, "save_key_im").asString();
         addToRegistry();
         registerFunctional();
         return (T) this;
@@ -126,6 +128,7 @@ public class TextureTranslationService extends PacketListenerAbstract implements
             if(result != null){
                 action.setItemStack(result);
                 event.markForReEncode(true);
+                event.setCancelled(true);
             }
         }else if(packetType == PacketType.Play.Client.CLICK_WINDOW){
             WrapperPlayClientClickWindow action = new WrapperPlayClientClickWindow(event);

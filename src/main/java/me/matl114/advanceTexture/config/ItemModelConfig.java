@@ -8,7 +8,7 @@ import java.util.Map;
 public class ItemModelConfig {
     boolean enableModel;
     Map<String, String> itemModelPaths = Map.of(
-        "slimefun", "item-models.yml"
+        "slimefun", "item-model-overrides.yml"
     );
     Map<String, String> customModelPaths = Map.of(
         "slimefun", "PublicBukkitValues.slimefun:slimefun_item"
