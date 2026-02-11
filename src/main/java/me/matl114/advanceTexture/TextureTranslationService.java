@@ -357,8 +357,8 @@ public class TextureTranslationService extends PacketListenerAbstract implements
                         }
                     }
                     if(enableItemModel){
-                        String model = TextureIdService.getManager().getTextureModel(string);
-                        if(model != null && !model.isEmpty()){
+                        ResourceLocation model = TextureIdService.getManager().getTextureModel(string);
+                        if(model != null){
                             if(stackCopy == null){
                                 stackCopy = stack.copy();
                             }
@@ -376,7 +376,7 @@ public class TextureTranslationService extends PacketListenerAbstract implements
                                 nbtCopy.setTag(customImSaveKey, new NBTByte((byte) 1));
                             }
                             stackCopy.getComponents().getPatches().put(ComponentTypes.CUSTOM_DATA, Optional.of(nbtCopy));
-                            stackCopy.getComponents().getPatches().put(ComponentTypes.ITEM_MODEL, Optional.of(new ItemModel(new ResourceLocation(model))));
+                            stackCopy.getComponents().getPatches().put(ComponentTypes.ITEM_MODEL, Optional.of(new ItemModel(model)));
                         }
                     }
 

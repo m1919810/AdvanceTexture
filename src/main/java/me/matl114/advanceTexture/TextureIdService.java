@@ -1,5 +1,6 @@
 package me.matl114.advanceTexture;
 
+import com.github.retrooper.packetevents.resources.ResourceLocation;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
@@ -8,6 +9,8 @@ import lombok.Getter;
 import me.matl114.matlib.algorithms.algorithm.FileUtils;
 import me.matl114.matlib.core.Manager;
 import me.matl114.matlib.utils.Debug;
+import net.kyori.adventure.key.Key;
+import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.Plugin;
 
 import java.io.File;
@@ -62,7 +65,12 @@ public class TextureIdService implements Manager {
                                 //add namespacedkey
                                 textureIds.put(entry.getKey() + ":" + entry0.getKey(), (int) number);
                             }else if(entry0.getValue() instanceof String str){
-                                textureModelPath.put(entry.getKey() + ":" + entry0.getKey(), str);
+                                try{
+                                    textureModelPath.put(entry.getKey() + ":" + entry0.getKey(), new ResourceLocation(str));
+                                }catch (Throwable e){
+                                    Debug.logger("Invalid model path: " + str);
+                                }
+
                             }
                         }
                     }
@@ -77,13 +85,13 @@ public class TextureIdService implements Manager {
     }
 
     private final Object2IntMap<String> textureIds = new Object2IntOpenHashMap<String>();
-    private final Object2ObjectMap<String,String> textureModelPath = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectMap<String, ResourceLocation> textureModelPath = new Object2ObjectOpenHashMap<>();
 
     public int getTextureId(String texture){
         return textureIds.getInt(texture);
     }
 
-    public String getTextureModel(String texture){
+    public ResourceLocation getTextureModel(String texture){
         return textureModelPath.get(texture);
     }
     public int getTextureIdOr(String texture){
